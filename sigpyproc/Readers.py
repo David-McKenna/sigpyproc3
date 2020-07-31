@@ -90,8 +90,9 @@ class FilReader(Filterbank):
         lowestChan, highestChan, sampleOffset = (0, 0, start)  
         with tqdm(total = nsamps * self.header.nchans) as progress:
             if self.bitfact == 1 and smallReads:
-                while currSample[-1] != nsamps:
+                while currSample[-1] != nsamps - 1:
                     relevantChannels = np.argwhere(np.logical_and(maxSample > sampleOffset, minSample <= sampleOffset)).flatten()
+                    print(relevantChannels, currSample[-1])
                     lowestChan = np.min(relevantChannels)
                     highestChan = np.max(relevantChannels)
                     sampledChans = np.arange(lowestChan, highestChan + 1, dtype = int)
