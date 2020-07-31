@@ -108,7 +108,7 @@ class FilReader(Filterbank):
                     else:
                         sampleOffset += 1
 
-                    progress.update(np.sum(currSample))
+                    progress.update(readLength)
             else:
                 while currSample[-1] != nsamps:
                     relevantChannels = np.argwhere(np.logical_and(maxSample > sampleOffset, minSample <= sampleOffset)).flatten()
@@ -129,7 +129,7 @@ class FilReader(Filterbank):
                     else:
                         sampleOffset += 1
 
-                    progress.update(np.sum(currSample))
+                    progress.update(readLength)
 
         if as_filterbankBlock:
             data = FilterbankBlock(data, new_header)
