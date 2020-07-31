@@ -809,8 +809,8 @@ class FilterbankBlock(np.ndarray):
             delays = self.header.getDMdelays(dm)
             new_ar = FilterbankBlock(np.zeros((self.header.nchans, self.shape[1] - delays[-1]), dtype = self.dtype), self.header)
             end_sample = delays + new_ar.shape[1]
-            slices = [np.arange(sample, sample + delays[i]) for i, sample in enumerate(delays)]
-
+            
+            slices = np.array([np.arange(sample, sample + delays[i]) for i, sample in enumerate(delays)])
             new_ar[...] = self[np.arange(self.shape[0]), slices] 
             
         new_ar.dm = dm
