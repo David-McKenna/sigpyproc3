@@ -807,7 +807,7 @@ class FilterbankBlock(np.ndarray):
                 new_ar[ii] = rollArray(self[ii], delays[ii]%self.shape[1], 0)
         else:
             delays = self.header.getDMdelays(dm)
-            new_ar = FilterbankBlock(np.zeros((self.header.nchans), self.shape[1] - delays[-1], dtype = self.dtype), self.header)
+            new_ar = FilterbankBlock(np.zeros((self.header.nchans, self.shape[1] - delays[-1]), dtype = self.dtype), self.header)
             end_sample = delays + new_ar.shape[1]
             slices = [slice(sample, sample + delays[i]) for i, sample in enumerate(delays)]
 
