@@ -60,7 +60,7 @@ class FilReader(Filterbank):
         else:
             return data
 
-    def readDedispersedBlock(self, start, nsamps, dm, as_filterbankBlock=True, smallReads = True):
+    def readDedispersedBlock(self, start, nsamps, dm, as_filterbankBlock=True, small_reads = True):
         """Read a block of dedispersed filterbank data, best used in cases where
             I/O time dominates reading a block of data.
         
@@ -76,60 +76,52 @@ class FilReader(Filterbank):
         :param as_filterbankBlock: whether to read data as filterbankBlock or numpy array
         :type as_filterbankBlock: bool
 
+        :param small_reads: if the datum size is greater than 1 byte, only read the data needed
+            instead of every frequency of every sample
+        :type small_reads: bool
+
         :return: 2-D array of filterbank data
         :rtype: :class:`~sigpyproc.Filterbank.FilterbankBlock`
         """
         data = np.zeros((self.header.nchans, nsamps), dtype = self._file.dtype)
-        minSample = start + self.header.getDMdelays(dm)
-        maxSample = minSample + nsamps
-        currSample = np.zeros(self.header.nchans, dtype = int)
+        min_sample = start + self.header.getDMdelays(dm)
+        max_sample = min_sample + nsamps
+        curr_sample = np.zeros(self.header.nchans, dtype = int)
+
 
         start_mjd  = self.header.mjdAfterNsamps(start)
         new_header = self.header.newHeader({'tstart':start_mjd})
 
-        lowestChan, highestChan, sampleOffset = (0, 0, start) 
+        lowest_chan, highest_chan, sample_offset = (0, 0, start) 
         with tqdm(total = nsamps * self.header.nchans) as progress:
-            if self.bitfact == 1 and smallReads:
-                while currSample[-1] != nsamps - 1:
-                    relevantChannels = np.argwhere(np.logical_and(maxSample > sampleOffset, minSample <= sampleOffset)).flatten()
-                    lowestChan = relevantChannels[0]
-                    highestChan = relevantChannels[-1]
-                    sampledChans = np.arange(lowestChan, highestChan + 1, dtype = int)
-                    readLength = sampledChans.size
+            while curr_sample[-1] != nsamps:
+                relevant_channels = np.argwhere(np.logical_and(max_sample > sample_offset, min_sample <= sample_offset)).flatten()
+                lowest_chan = np.min(relevant_channels)
+                highest_chan = np.max(relevant_channels)
+                sampled_chans = np.arange(lowest_chan, highest_chan + 1, dtype = int)
+                read_length = sampled_chans.size
 
-                    nextOffset = sampleOffset * self.sampsize + lowestChan * self.itemsize
-                    self._file.seek(self.header.hdrlen + nextOffset)
-
-                    data[sampledChans, currSample[sampledChans]] = self._file.cread(readLength)
-                    currSample[sampledChans] += 1
-
-                    if currSample[highestChan] == nsamps:
-                        sampleOffset = minSample[highestChan + 1]
-                    else:
-                        sampleOffset += 1
-
-                    progress.update(readLength)
-            else:
-                while currSample[-1] != nsamps:
-                    relevantChannels = np.argwhere(np.logical_and(maxSample > sampleOffset, minSample <= sampleOffset)).flatten()
-                    lowestChan = np.min(relevantChannels)
-                    highestChan = np.max(relevantChannels)
-                    sampledChans = np.arange(lowestChan, highestChan + 1, dtype = int)
-                    readLength = sampledChans.size
-
-                    nextOffset = sampleOffset * self.sampsize
-                    self._file.seek(self.header.hdrlen + nextOffset)
+                if self.bitfact == 1 and small_reads:
+                    next_offset = sample_offset * self.sampsize + lowest_chan * self.itemsize
+                    self._file.seek(self.header.hdrlen + next_offset)
+                   
+                    data[sampled_chans, curr_sample[sampled_chans]] = self._file.cread(read_length)
+               
+                else:
+                    next_offset = sample_offset * self.sampsize
+                    self._file.seek(self.header.hdrlen + next_offset)
 
                     sample = self._file.cread(self.sampsize)
-                    data[sampledChans, currSample[sampledChans]] = sample[sampledChans]
-                    currSample[sampledChans] += 1
+                    data[sampled_chans, curr_sample[sampled_chans]] = sample[sampled_chans]
 
-                    if currSample[highestChan] == nsamps:
-                        sampleOffset = minSample[highestChan + 1]
-                    else:
-                        sampleOffset += 1
+                curr_sample[sampled_chans] += 1
 
-                    progress.update(readLength)
+                if sample_offset == max_sample[highest_chan]:
+                    sample_offset = min_sample[highest_chan + 1]
+                else:
+                    sample_offset += 1
+
+                progress.update(read_length)
 
         if as_filterbankBlock:
             data = FilterbankBlock(data, new_header)
