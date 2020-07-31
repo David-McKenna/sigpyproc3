@@ -93,8 +93,8 @@ class FilReader(Filterbank):
         while currSample[-1] != nsamps:
             relevantChannels = np.argwhere(np.logical_and(maxSample > sampleOffset, minSample <= sampleOffset)).flatten()
             print(relevantChannels)
-            lowestChan = np.min(relevantChannels)
-            highestChan = np.max(relevantChannels)
+            lowestChan = np.min(relevantChannels)[0]
+            highestChan = np.max(relevantChannels)[0]
             sampledChans = np.arange(lowestChan, highestChan + 1)
             readLength = sampledChans.size
 
