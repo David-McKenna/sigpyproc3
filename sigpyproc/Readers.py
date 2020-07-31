@@ -103,7 +103,7 @@ class FilReader(Filterbank):
                     data[sampledChans, currSample[sampledChans]] = self._file.cread(readLength)
                     currSample[sampledChans] += 1
 
-                    if sampleOffset == maxSample[highestChan]:
+                    if currSample[highestChan] == nsamps:
                         sampleOffset = minSample[highestChan + 1]
                     else:
                         sampleOffset += 1
@@ -124,7 +124,7 @@ class FilReader(Filterbank):
                     data[sampledChans, currSample[sampledChans]] = sample[sampledChans]
                     currSample[sampledChans] += 1
 
-                    if sampleOffset == maxSample[highestChan] - 1:
+                    if currSample[highestChan] == nsamps:
                         sampleOffset = minSample[highestChan + 1]
                     else:
                         sampleOffset += 1
