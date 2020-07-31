@@ -79,8 +79,6 @@ class FilReader(Filterbank):
         :return: 2-D array of filterbank data
         :rtype: :class:`~sigpyproc.Filterbank.FilterbankBlock`
         """
-        baseFileOffset = self.header.hdrlen+start*self.sampsize
-        self._file.seek(baseFileOffset)
         data = np.zeros((self.header.nchans, nsamps), dtype = self._file.dtype)
         minSample = start + self.header.getDMdelays(dm)
         maxSample = minSample + nsamps
@@ -93,13 +91,14 @@ class FilReader(Filterbank):
         while currSample[-1] != nsamps:
             relevantChannels = np.argwhere(np.logical_and(maxSample > sampleOffset, minSample <= sampleOffset)).flatten()
             print(relevantChannels)
-            lowestChan = np.min(relevantChannels)[0]
-            highestChan = np.max(relevantChannels)[0]
+            lowestChan = np.min(relevantChannels)
+            highestChan = np.max(relevantChannels)
             sampledChans = np.arange(lowestChan, highestChan + 1)
             readLength = sampledChans.size
 
             nextOffset = self.header.nchans * sampleOffset * self.sampsize + lowestChan * self.sampsize
-            self._file.seek(baseFileOffset + nextOffset)
+            print(lowestChan, highestChan, readLength, nextOffset)
+            self._file.seek(self.header.hdrlen + nextOffset)
 
             data[sampledChans, currSample[sampledChans]] = self._file.cread(readLength)
             currSample[sampledChans] += 1
