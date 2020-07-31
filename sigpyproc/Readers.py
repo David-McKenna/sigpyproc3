@@ -116,7 +116,7 @@ class FilReader(Filterbank):
 
                 curr_sample[sampled_chans] += 1
 
-                if sample_offset > max_sample[highest_chan]:
+                if sample_offset >= max_sample[highest_chan]:
                     sample_offset = min_sample[highest_chan + 1]
                 else:
                     sample_offset += 1
