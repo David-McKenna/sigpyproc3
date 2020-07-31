@@ -91,7 +91,7 @@ class FilReader(Filterbank):
 
         lowestChan, highestChan, sampleOffset = (0, 0, 0)
         while currSample[-1] != nsamps:
-            relevantChannels = np.argwhere(np.logical_and(np.where(maxSample > sampleOffset), np.where(minSample <= sampleOffset)))
+            relevantChannels = np.argwhere(np.logical_and(maxSample > sampleOffset, minSample <= sampleOffset))
             lowestChan = np.min(relevantChannels)
             highestChan = np.max(relevantChannels)
             sampledChans = np.arange(lowestChan, highestChan + 1)
