@@ -88,7 +88,7 @@ class FilReader(Filterbank):
         new_header = self.header.newHeader({'tstart':start_mjd})
 
         lowestChan, highestChan, sampleOffset = (0, 0, start)  
-        with tqdm(total = nsamps * self.header.chans) as progress:
+        with tqdm(total = nsamps * self.header.nchans) as progress:
             if self.bitfact == 1 and smallReads:
                 while currSample[-1] != nsamps:
                     if (currSampe[-1] + 1 % 100 == 0):
