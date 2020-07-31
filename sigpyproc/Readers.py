@@ -90,7 +90,9 @@ class FilReader(Filterbank):
         new_header = self.header.newHeader({'tstart':start_mjd})
 
         lowestChan, highestChan, sampleOffset = (0, 0, 0)
+        print(maxSample, minSample)
         while currSample[-1] != nsamps:
+            print(maxSample > sampleOffset, minSample <= sampleOffset)
             relevantChannels = np.argwhere(np.logical_and(maxSample > sampleOffset, minSample <= sampleOffset))
             lowestChan = np.min(relevantChannels)
             highestChan = np.max(relevantChannels)
