@@ -79,6 +79,9 @@ class FilReader(Filterbank):
         :return: 2-D array of filterbank data
         :rtype: :class:`~sigpyproc.Filterbank.FilterbankBlock`
         """
+        if self.bitfact != 1:
+            raise RuntimeError("Not yet implemented for 1, 2 or 4-bit inputs.")
+
         data = np.zeros((self.header.nchans, nsamps), dtype = self._file.dtype)
         minSample = start + self.header.getDMdelays(dm)
         maxSample = minSample + nsamps
@@ -96,7 +99,7 @@ class FilReader(Filterbank):
             sampledChans = np.arange(lowestChan, highestChan + 1)
             readLength = sampledChans.size
 
-            nextOffset = self.header.nchans * sampleOffset * self.sampsize + lowestChan * self.sampsize
+            nextOffset = sampleOffset * self.sampsize + lowestChan self.itemsize
             print(lowestChan, highestChan, readLength, nextOffset)
             self._file.seek(self.header.hdrlen + nextOffset)
 
