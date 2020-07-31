@@ -95,7 +95,7 @@ class FilReader(Filterbank):
         lowest_chan, highest_chan, sample_offset = (0, 0, start) 
         with tqdm(total = nsamps * self.header.nchans) as progress:
             while curr_sample[-1] <= nsamps:
-                relevant_channels = np.argwhere(np.logical_and(max_sample >= sample_offset, min_sample <= sample_offset)).flatten()
+                relevant_channels = np.argwhere(np.logical_and(max_sample > sample_offset, min_sample <= sample_offset)).flatten()
                 lowest_chan = np.min(relevant_channels)
                 highest_chan = np.max(relevant_channels)
                 sampled_chans = np.arange(lowest_chan, highest_chan + 1, dtype = int)
@@ -116,7 +116,7 @@ class FilReader(Filterbank):
 
                 curr_sample[sampled_chans] += 1
 
-                if sample_offset >= max_sample[highest_chan]:
+                if curr_sample[highest_chan] > nsamps:
                     sample_offset = min_sample[highest_chan + 1]
                 else:
                     sample_offset += 1
