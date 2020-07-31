@@ -92,8 +92,8 @@ class FilReader(Filterbank):
             if self.bitfact == 1 and smallReads:
                 while currSample[-1] != nsamps - 1:
                     relevantChannels = np.argwhere(np.logical_and(maxSample > sampleOffset, minSample <= sampleOffset)).flatten()
-                    lowestChan = np.min(relevantChannels)
-                    highestChan = np.max(relevantChannels)
+                    lowestChan = relevantChannels[0]
+                    highestChan = relevantChannels[-1]
                     sampledChans = np.arange(lowestChan, highestChan + 1, dtype = int)
                     readLength = sampledChans.size
 
@@ -124,7 +124,7 @@ class FilReader(Filterbank):
                     data[sampledChans, currSample[sampledChans]] = sample[sampledChans]
                     currSample[sampledChans] += 1
 
-                    if sampleOffset == maxSample[highestChan]:
+                    if sampleOffset == maxSample[highestChan] - 1:
                         sampleOffset = minSample[highestChan + 1]
                     else:
                         sampleOffset += 1
