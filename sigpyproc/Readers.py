@@ -99,7 +99,7 @@ class FilReader(Filterbank):
             sampledChans = np.arange(lowestChan, highestChan + 1)
             readLength = sampledChans.size
 
-            nextOffset = sampleOffset * self.sampsize + lowestChan self.itemsize
+            nextOffset = sampleOffset * self.sampsize + lowestChan * self.itemsize
             print(lowestChan, highestChan, readLength, nextOffset)
             self._file.seek(self.header.hdrlen + nextOffset)
 
