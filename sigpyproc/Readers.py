@@ -82,7 +82,7 @@ class FilReader(Filterbank):
         baseFileOffset = self.header.hdrlen+start*self.sampsize
         self._file.seek(baseFileOffset)
         data = np.zeros((self.header.nchans, nsamps), dtype = self._file.dtype)
-        minSample = self.header.getDMdelays(dm)
+        minSample = start + self.header.getDMdelays(dm)
         maxSample = minSample + nsamps
         currSample = np.zeros(self.header.nchans)
 
@@ -90,14 +90,12 @@ class FilReader(Filterbank):
         new_header = self.header.newHeader({'tstart':start_mjd})
 
         lowestChan, highestChan, sampleOffset = (0, 0, 0)
-        print(maxSample, minSample)
         while currSample[-1] != nsamps:
-            print(maxSample > sampleOffset, minSample <= sampleOffset)
             relevantChannels = np.argwhere(np.logical_and(maxSample > sampleOffset, minSample <= sampleOffset))
             lowestChan = np.min(relevantChannels)
             highestChan = np.max(relevantChannels)
             sampledChans = np.arange(lowestChan, highestChan + 1)
-            readLength = sampledChan.size
+            readLength = sampledChans.size
 
             nextOffset = self.header.nchans * sampleOffset * self.sampsize + lowestChan * self.sampsize
             self._file.seek(baseFileOffset + nextOffset)
