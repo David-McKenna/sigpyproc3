@@ -1,6 +1,7 @@
 import numpy as np
 import ctypes as C
 from numpy.ctypeslib import as_ctypes as as_c
+from numpy.lib import stride_tricks
 
 from sigpyproc.Utils import rollArray
 from sigpyproc.FoldedData import FoldedData
@@ -316,6 +317,51 @@ class Filterbank(object):
                                 C.c_int(self.header.nchans),
                                 C.c_int(nsamps))
             out_file.cwrite(write_ar[:nsamps*self.header.nchans//ffactor//tfactor])
+        return out_file.name
+
+
+
+    def downsample_python(self, tfactor=1, gulp=512, filename=None, back_compatible=True, **kwargs):
+        """Downsample data in time and/or frequency and write to file.
+
+        :param tfactor: factor by which to downsample in time
+        :type tfactor: int
+
+        :param ffactor: factor by which to downsample in frequency
+        :type ffactor: int
+
+        :param gulp: number of samples in each read
+        :type gulp: int
+
+        :param filename: name of file to write to (defaults to ``basename_tfactor_ffactor.fil``)
+        :type filename: str
+
+        :param back_compatible: sigproc compatibility flag (legacy code)
+        :type back_compatible: bool
+
+        :return: output file name
+        :rtype: :func:`str`
+        """
+        if filename is None:
+            filename = f"{self.header.basename}_t{tfactor:d}.fil"
+            
+        # Gulp must be a multiple of tfactor
+        gulp = int(np.ceil(gulp/tfactor) * tfactor)
+            
+        out_file = self.header.prepOutfile(filename,
+                                   {"tsamp":self.header.tsamp*tfactor,
+                                    "nchans":self.header.nchans},
+                                    back_compatible=back_compatible)
+
+        write_ar   = np.zeros(gulp*self.header.nchans//tfactor, dtype=self.header.dtype)
+        
+        wordsize = write_ar.dtype.itemsize
+        for nsamps, ii, data in self.readPlan(gulp, **kwargs):
+            data_strided = stride_tricks.as_strided(data, shape = (nsamps//tfactor, tfactor, self.header.nchans), strides = (tfactor * self.header.nchans * wordsize, self.header.nchans * wordsize, wordsize))
+            write_ar[...] = np.median(data_strided, axis = 1).ravel()
+            
+            out_file.cwrite(write_ar[:nsamps*self.header.nchans//tfactor])
+
         return out_file.name
 
     def fold(self, period, dm, accel=0, nbins=50, nints=32, nbands=32, gulp=10000, **kwargs):
