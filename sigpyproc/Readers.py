@@ -3,6 +3,7 @@ import numpy as np
 import inspect
 from tqdm import tqdm
 
+from sigpyproc import libSigPyProc as lib
 from sigpyproc.Utils import File
 from sigpyproc.Header import Header
 from sigpyproc.Filterbank import Filterbank, FilterbankBlock
@@ -144,6 +145,53 @@ class FilReader(Filterbank):
             data.dm = dm
             return data
         return data
+
+
+    def readDownsampledBlock(self, start, nsamps, as_filterbankBlock = True,
+                             tfactor=1, ffactor=1, gulp = 512, **kawgs):
+
+        # Ensure the frequency factor is an integer multiple of nchans
+        if self.header.nchans % ffactor != 0:
+            raise ValueError("Bad frequency factor given")
+
+        # Adjust gulp if we need less data
+        if nsamps < gulp:
+            gulp = nsamps
+
+        # Calculate the number of decimated samples in eahc dimension
+        #   in the output filterbank
+        newnsamps = nsamps - nsamps % tfactor
+        new_nchans = self.header.nchans // ffactor
+
+        # Gulp must be a multiple of tfactor
+        gulp = int(np.ceil(gulp / tfactor) * tfactor)
+
+        # Create a new empty array to store the results and an intermediate array
+        new_ar = np.empty(self.header.nchans // ffactor, newnsamps // tfactor, 
+                          dtype="float32")
+        write_ar = np.empty(
+            gulp * self.header.nchans // ffactor // tfactor, dtype="float32",
+        )
+
+        # Store nsamps in kwargs for self.readPlan(...)
+        kwags['nsamps'] = nsamps
+        # Iterate until completion
+        curr_sample = 0
+        for nsamps, _ii, data in self.readPlan(gulp, **kwargs):
+            lib.downsample(data.transpose().ravel(), write_ar, tfactor, ffactor, 
+                           self.header.nchans, nsamps)
+            new_ar[:, curr_sample: curr_sample + nsamps] = 
+                write_ar.reshape(
+                    nsamps // tfactor, self.header.nchans // ffactor
+                ).transpose()
+
+            curr_sample += nsamps
+
+
+        new_tsamp = self.header.tsamp * tfactor
+        new_header = self.header.newHeader({"tsamp": new_tsamp, "nchans": new_nchans})
+        return FilterbankBlock(new_ar, new_header)
+
 
     def readPlan(self, gulp, skipback=0, start=0, nsamps=None,
                  tqdm_desc=None, verbose=True):
