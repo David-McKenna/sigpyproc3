@@ -321,7 +321,7 @@ class Filterbank(object):
 
 
 
-    def downsample_python(self, tfactor=1, gulp=512, filename=None, back_compatible=True, **kwargs):
+    def downsample_python(self, tfactor=1, gulp=512, filename=None, back_compatible=True, beamlets = None, **kwargs):
         """Downsample data in time and/or frequency and write to file.
 
         :param tfactor: factor by which to downsample in time
@@ -347,20 +347,29 @@ class Filterbank(object):
             
         # Gulp must be a multiple of tfactor
         gulp = int(np.ceil(gulp/tfactor) * tfactor)
+
+        if beamlets != None:
+            nchans = beamlets[1] - beamlets[0]
+        else:
+            nchans = None
             
         out_file = self.header.prepOutfile(filename,
                                    {"tsamp":self.header.tsamp*tfactor,
-                                    "nchans":self.header.nchans},
+                                    "nchans":nchans or self.header.nchans},
                                     back_compatible=back_compatible)
 
-        write_ar   = np.zeros(gulp*self.header.nchans//tfactor, dtype=self.header.dtype)
+        write_ar   = np.zeros(gulp*(nchans or self.header.nchans)//tfactor, dtype=self.header.dtype)
         
         wordsize = write_ar.dtype.itemsize
         for nsamps, ii, data in self.readPlan(gulp, **kwargs):
-            data_strided = stride_tricks.as_strided(data, shape = (nsamps//tfactor, tfactor, self.header.nchans), strides = (tfactor * self.header.nchans * wordsize, self.header.nchans * wordsize, wordsize))
+            if beamlets != None:
+                data_strided = stride_tricks.as_strided(data[beamlets[0]:beamlets[1], :], shape = (nsamps//tfactor, tfactor, nchans), strides = (tfactor * nchans * wordsize, nchans * wordsize, wordsize))
+            else:
+                data_strided = stride_tricks.as_strided(data, shape = (nsamps//tfactor, tfactor, self.header.nchans), strides = (tfactor * self.header.nchans * wordsize, self.header.nchans * wordsize, wordsize))
+
             write_ar[...] = np.median(data_strided, axis = 1).ravel()
             
-            out_file.cwrite(write_ar[:nsamps*self.header.nchans//tfactor])
+            out_file.cwrite(write_ar[:nsamps*(nchans or self.header.nchans)//tfactor])
 
         return out_file.name
 
