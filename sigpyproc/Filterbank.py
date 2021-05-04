@@ -358,15 +358,17 @@ class Filterbank(object):
                                     "nchans":nchans or self.header.nchans},
                                     back_compatible=back_compatible)
 
+        print(f"Downsampling {filename} with a median filter on {tfactor} timesteps with beamlets limits of {beamlets}")
+
         write_ar   = np.zeros(gulp*(nchans or self.header.nchans)//tfactor, dtype=self.header.dtype)
         
         wordsize = write_ar.dtype.itemsize
         for nsamps, ii, data in self.readPlan(gulp, **kwargs):
-            if beamlets != None:
-                data_strided = stride_tricks.as_strided(data[beamlets[0]:beamlets[1], :], shape = (nsamps//tfactor, tfactor, nchans), strides = (tfactor * nchans * wordsize, nchans * wordsize, wordsize))
-            else:
-                data_strided = stride_tricks.as_strided(data, shape = (nsamps//tfactor, tfactor, self.header.nchans), strides = (tfactor * self.header.nchans * wordsize, self.header.nchans * wordsize, wordsize))
+            data_strided = stride_tricks.as_strided(data, shape = (nsamps//tfactor, tfactor, self.header.nchans), strides = (tfactor * self.header.nchans * wordsize, self.header.nchans * wordsize, wordsize))
 
+            if beamlets != None:
+                data_strided = data_strided[..., beamlets[0]:beamlets[1]]
+                
             write_ar[...] = np.median(data_strided, axis = 1).ravel()
             
             out_file.cwrite(write_ar[:nsamps*(nchans or self.header.nchans)//tfactor])
