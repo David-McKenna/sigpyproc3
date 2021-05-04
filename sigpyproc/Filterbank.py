@@ -349,7 +349,7 @@ class Filterbank(object):
         gulp = int(np.ceil(gulp/tfactor) * tfactor)
 
         if beamlets != None:
-            nchans = beamlets[1] - beamlets[0]
+            nchans = beamlets[1] - beamlets[0] - 1
         else:
             nchans = None
             
@@ -368,7 +368,7 @@ class Filterbank(object):
 
             if beamlets != None:
                 data_strided = data_strided[..., beamlets[0]:beamlets[1]]
-                
+
             write_ar[...] = np.median(data_strided, axis = 1).ravel()
             
             out_file.cwrite(write_ar[:nsamps*(nchans or self.header.nchans)//tfactor])
